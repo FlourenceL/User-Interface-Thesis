@@ -23,7 +23,8 @@ const UserProgress = () => {
   }, []);
 
   return (
-    <div>
+    <div className="container">
+      <h1>Users</h1> <br />
       <table>
         <thead>
           <tr>

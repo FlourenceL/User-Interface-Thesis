@@ -134,3 +134,18 @@ th:nth-child(n + 3) {
   /* target the remaining columns */
   width: 15%; /* set the width to 10% of the table */
 }
+
+.container {
+  background-color: rgba(250, 250, 250, 0.171);
+  backdrop-filter: blur(7px);
+
+  box-shadow: 10px 10px 5px rgba(0, 0, 0, 0.664);
+  border-radius: 20px;
+
+  width: 870px;
+  height: 567px;
+
+  position: absolute;
+  margin-top: 1%;
+  margin-left: 12%;
+}
