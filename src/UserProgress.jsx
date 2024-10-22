@@ -2,6 +2,16 @@ import React, { useEffect, useState } from "react";
 import { getDatabase, ref, onValue } from "firebase/database";
 import firebaseConfig from "./firebaseConfig";
 import Modal from "react-modal";
+import {
+  Bar,
+  BarChart,
+  ResponsiveContainer,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Legend,
+  Tooltip,
+} from "recharts";
 // Your Firebase configuration
 
 const UserProgress = () => {
@@ -23,6 +33,41 @@ const UserProgress = () => {
       setUsers(usersList);
     });
   }, []);
+
+  //------------------------------------------------------------------------------------
+
+  const productSales = [
+    {
+      name: "Jan",
+      product1: 4500,
+      product2: 2400,
+    },
+    {
+      name: "Feb",
+      product1: 1500,
+      product2: 3400,
+    },
+    {
+      name: "Mar",
+      product1: 7500,
+      product2: 1400,
+    },
+    {
+      name: "Apr",
+      product1: 6500,
+      product2: 8400,
+    },
+    {
+      name: "May",
+      product1: 9500,
+      product2: 1500,
+    },
+    {
+      name: "June",
+      product1: 8000,
+      product2: 3300,
+    },
+  ];
 
   return (
     <div className="container">
@@ -56,7 +101,27 @@ const UserProgress = () => {
                   onRequestClose={closeModal}
                   ariaHideApp={false}
                 >
-                  <h1>Helloworld</h1>
+                  <div className="box">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart
+                        width={500}
+                        height={400}
+                        data={productSales}
+                        margin="30"
+                      >
+                        <YAxis />
+                        <XAxis dataKey="name" />
+                        <CartesianGrid />
+                        <Tooltip />
+                        <Legend />
+                        <Bar
+                          dataKey="product1"
+                          type="monotone"
+                          stackId="1"
+                        ></Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
                   <button onClick={closeModal}>Close</button>
                 </Modal>
               </td>
