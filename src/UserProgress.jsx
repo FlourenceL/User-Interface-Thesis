@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { getDatabase, ref, onValue } from "firebase/database";
+import { getDatabase, ref, onValue, off } from "firebase/database";
+import Modal from "@mui/material/Modal";
 import firebaseConfig from "./firebaseConfig";
-import Modal from "react-modal";
 import {
   Bar,
   BarChart,
@@ -12,124 +12,155 @@ import {
   Legend,
   Tooltip,
 } from "recharts";
-// Your Firebase configuration
+import {
+  Button,
+  Container,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Typography,
+  Box, // Import Box component from MUI
+} from "@mui/material";
 
 const UserProgress = () => {
   const [users, setUsers] = useState([]);
-
+  const [currentUserProgress, setCurrentUserProgress] = useState([]);
   const [modal, setModal] = useState(false);
-  const openModal = () => setModal(true);
+
+  const openModal = (progress) => {
+    setCurrentUserProgress(progress); // Set the current user's progress data
+    setModal(true);
+  };
+
   const closeModal = () => setModal(false);
+
   useEffect(() => {
     const db = getDatabase();
     const usersRef = ref(db, "Users");
 
-    onValue(usersRef, (snapshot) => {
+    const unsubscribe = onValue(usersRef, (snapshot) => {
       const data = snapshot.val();
-      const usersList = Object.keys(data).map((key) => ({
-        id: key,
-        ...data[key],
-      }));
-      setUsers(usersList);
+      if (data) {
+        const usersList = Object.keys(data).map((key) => {
+          const userProgress = data[key].Progress || {};
+          const progressEntries = Object.keys(userProgress).map(
+            (progressKey) => ({
+              createdAt: new Date(
+                userProgress[progressKey].createdAt
+              ).toLocaleDateString(), // Convert timestamp to readable date
+              weight: userProgress[progressKey].weight,
+            })
+          );
+          return {
+            id: key,
+            ...data[key],
+            progress: progressEntries,
+          };
+        });
+        setUsers(usersList);
+      }
     });
+
+    return () => {
+      off(usersRef); // Cleanup listener when component unmounts
+    };
   }, []);
 
-  //------------------------------------------------------------------------------------
-
-  const productSales = [
-    {
-      name: "Jan",
-      product1: 4500,
-      product2: 2400,
-    },
-    {
-      name: "Feb",
-      product1: 1500,
-      product2: 3400,
-    },
-    {
-      name: "Mar",
-      product1: 7500,
-      product2: 1400,
-    },
-    {
-      name: "Apr",
-      product1: 6500,
-      product2: 8400,
-    },
-    {
-      name: "May",
-      product1: 9500,
-      product2: 1500,
-    },
-    {
-      name: "June",
-      product1: 8000,
-      product2: 3300,
-    },
-  ];
+  //------------------------------------
 
   return (
-    <div className="container">
-      <h1>Users</h1> <br />
-      <table>
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Age</th>
-            <th>Height</th>
-            <th>Weight</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {users.map((user) => (
-            <tr key={user.id}>
-              <td>
-                {user.firstName} {user.lastName}
-              </td>
+    <Container maxWidth="sm">
+      <Typography variant="h4" gutterBottom>
+        Users
+      </Typography>
 
-              <td>{user.age}</td>
-              <td>{user.height}</td>
-              <td>{user.weight}</td>
-              <td>
-                <button className="viewBtn" onClick={openModal}>
-                  View
-                </button>
-                <Modal
-                  isOpen={modal}
-                  onRequestClose={closeModal}
-                  ariaHideApp={false}
-                >
-                  <div className="box">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart
-                        width={500}
-                        height={400}
-                        data={productSales}
-                        margin="30"
-                      >
-                        <YAxis />
-                        <XAxis dataKey="name" />
-                        <CartesianGrid />
-                        <Tooltip />
-                        <Legend />
-                        <Bar
-                          dataKey="product1"
-                          type="monotone"
-                          stackId="1"
-                        ></Bar>
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                  <button onClick={closeModal}>Close</button>
-                </Modal>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+      {/* MUI Table */}
+      <TableContainer component={Paper}>
+        <Table aria-label="simple table">
+          <TableHead>
+            <TableRow>
+              <TableCell>
+                <strong>Name</strong>
+              </TableCell>
+              <TableCell>
+                <strong>Age</strong>
+              </TableCell>
+              <TableCell>
+                <strong>Action</strong>
+              </TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {users.map((user) => (
+              <TableRow key={user.id}>
+                <TableCell>
+                  {user.firstName} {user.lastName}
+                </TableCell>
+                <TableCell>{user.age}</TableCell>
+                <TableCell>
+                  <Button
+                    variant="contained"
+                    onClick={() => openModal(user.progress)}
+                  >
+                    View
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+
+      {/* Modal for User Progress */}
+      <Modal
+        open={modal}
+        onClose={closeModal}
+        aria-labelledby="modal-modal-title"
+        aria-describedby="modal-modal-description"
+      >
+        <Box
+          className="box"
+          sx={{
+            padding: "20px",
+            backgroundColor: "#fff",
+            margin: "50px auto",
+            maxWidth: "600px",
+            borderRadius: "8px", // Rounded corners
+            boxShadow: 3, // Box shadow for depth effect
+          }}
+        >
+          <ResponsiveContainer width="100%" height={400}>
+            <BarChart
+              data={currentUserProgress}
+              margin={{ top: 30, right: 30, left: 20, bottom: 5 }}
+            >
+              <XAxis dataKey="createdAt" />
+
+              {/* Calculate and set the Y-axis domain */}
+              <YAxis
+                domain={[
+                  0,
+                  Math.max(...currentUserProgress.map((data) => data.weight)) +
+                    20,
+                ]}
+              />
+
+              <CartesianGrid />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey="weight" fill="#8884d8" />
+            </BarChart>
+          </ResponsiveContainer>
+          <Button variant="contained" onClick={closeModal} sx={{ mt: 2 }}>
+            Close
+          </Button>
+        </Box>
+      </Modal>
+    </Container>
   );
 };
 
