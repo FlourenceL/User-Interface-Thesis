@@ -49,6 +49,27 @@ const UserProgress = () => {
     const db = getDatabase();
     const usersRef = ref(db, "Users");
 
+    const mapFatToInteger = (fatRange) => {
+      switch (fatRange) {
+        case "6%-8%":
+          return 1;
+        case "10%-14%":
+          return 2;
+        case "15%-19%":
+          return 3;
+        case "20%-24%":
+          return 4;
+        case "25%-29%":
+          return 5;
+        case "30%-34%":
+          return 6;
+        case "35%-40%":
+          return 7;
+        default:
+          return 0; // Return 0 or some default value if the range doesn't match
+      }
+    };
+
     const unsubscribe = onValue(usersRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
@@ -59,8 +80,12 @@ const UserProgress = () => {
               createdAt: new Date(
                 userProgress[progressKey].createdAt
               ).toLocaleDateString(),
-              weight: userProgress[progressKey].weight,
-              height: userProgress[progressKey].height, // Fetch fat percentage
+              weight: userProgress[progressKey].weight, // Fetch weight
+              height: userProgress[progressKey].height, // Fetch height
+              bmi: userProgress[progressKey].bmi, // Fetch bmi
+              bmiCategory: userProgress[progressKey].bmiCategory, // Fetch category
+              fatPercentage: userProgress[progressKey].fat, // Fetch category
+              fat: mapFatToInteger(userProgress[progressKey].fat),
             })
           );
           return {
@@ -156,6 +181,8 @@ const UserProgress = () => {
               backgroundColor: "#fff",
               margin: "50px auto",
               maxWidth: "600px",
+              maxHeight: "80vh", // Limit height to 80% of viewport height
+              overflowY: "auto", // Enable vertical scrolling
               borderRadius: "8px",
               boxShadow: 3,
             }}
@@ -192,15 +219,104 @@ const UserProgress = () => {
                     0,
                     Math.max(
                       ...currentUserProgress.map(
-                        (data) => parseFloat(data.fat) || 0
+                        (data) => parseFloat(data.height) || 0
                       )
-                    ) + 5,
+                    ) + 20,
                   ]}
                 />
                 <CartesianGrid />
                 <Tooltip />
                 <Legend />
                 <Line type="monotone" dataKey="height" stroke="#FF0000" />
+              </LineChart>
+            </ResponsiveContainer>
+
+            <ResponsiveContainer width="100%" height={400}>
+              <LineChart
+                data={currentUserProgress}
+                margin={{ top: 30, right: 30, left: 20, bottom: 5 }}
+              >
+                <XAxis dataKey="createdAt" />
+                <YAxis
+                  domain={[
+                    0,
+                    Math.max(
+                      ...currentUserProgress.map(
+                        (data) => parseFloat(data.fat) || 0
+                      )
+                    ) + 5,
+                  ]}
+                />
+                <CartesianGrid />
+                <Tooltip
+                  content={({ payload }) => {
+                    if (payload && payload.length) {
+                      const { fatPercentage } = payload[0].payload;
+                      return (
+                        <div
+                          style={{
+                            backgroundColor: "#fff",
+                            padding: "5px",
+                            border: "1px solid #ccc",
+                          }}
+                        >
+                          <p>
+                            <strong>Category:</strong> {fatPercentage}
+                          </p>
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
+                />
+                <Legend />
+                <Line type="monotone" dataKey="fat" stroke="#008000" />
+              </LineChart>
+            </ResponsiveContainer>
+
+            <ResponsiveContainer width="100%" height={400}>
+              <LineChart
+                data={currentUserProgress}
+                margin={{ top: 30, right: 30, left: 20, bottom: 5 }}
+              >
+                <XAxis dataKey="createdAt" />
+                <YAxis
+                  domain={[
+                    0,
+                    Math.max(
+                      ...currentUserProgress.map(
+                        (data) => parseFloat(data.bmi) || 0
+                      )
+                    ) + 5,
+                  ]}
+                />
+                <CartesianGrid />
+                <Tooltip
+                  content={({ payload }) => {
+                    if (payload && payload.length) {
+                      const { bmi, bmiCategory } = payload[0].payload;
+                      return (
+                        <div
+                          style={{
+                            backgroundColor: "#fff",
+                            padding: "5px",
+                            border: "1px solid #ccc",
+                          }}
+                        >
+                          <p>
+                            <strong>BMI:</strong> {bmi}
+                          </p>
+                          <p>
+                            <strong>Category:</strong> {bmiCategory}
+                          </p>
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
+                />
+                <Legend />
+                <Line type="monotone" dataKey="bmi" stroke="#FFFF00" />
               </LineChart>
             </ResponsiveContainer>
 
